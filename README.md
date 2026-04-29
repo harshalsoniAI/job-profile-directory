@@ -1,6 +1,6 @@
-# Job Profile Directory — City of Malgudi
+# Public Job Profile Directory required for Governmental bodies.
 
-A clean, modern public-facing web application for browsing municipal job classifications. Built with React + Node.js/Express + SQLite, designed for future Workday HCM API integration.
+A clean, modern public-facing web application for browsing municipal job classifications. Built with React + Node.js/Express + SQLite, designed for future Workday HCM API integration. Right now, it connects to a Supabase Database.
 
 ## Quick Start
 
