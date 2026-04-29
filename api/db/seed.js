@@ -1,5 +1,5 @@
-require('dotenv').config();
-const { supabase } = require('./database');
+import 'dotenv/config';
+import { supabase } from './database.js';
 
 const profiles = [
   // PUBLIC WORKS
@@ -36,7 +36,7 @@ const profiles = [
 ];
 
 async function seed() {
-  console.log('🚀 Starting SaaS Seeding (Full Dataset)...');
+  console.log('🚀 Starting ESM SaaS Seeding (Full Dataset)...');
 
   const { data: org, error: orgError } = await supabase
     .from('organizations')

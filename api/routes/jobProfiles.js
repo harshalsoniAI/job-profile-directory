@@ -1,5 +1,5 @@
-const express = require('express');
-const { supabase } = require('../db/database');
+import express from 'express';
+import { supabase } from '../db/database.js';
 
 const router = express.Router();
 
@@ -23,15 +23,14 @@ const getOrg = async (req, res, next) => {
 };
 
 /**
- * GET /api/:orgSlug/config
- * Returns branding config for the specific tenant
+ * GET /:orgSlug/config
  */
 router.get('/:orgSlug/config', getOrg, (req, res) => {
   res.json({ data: req.org });
 });
 
 /**
- * GET /api/:orgSlug/job-profiles
+ * GET /:orgSlug/job-profiles
  */
 router.get('/:orgSlug/job-profiles', getOrg, async (req, res) => {
   try {
@@ -60,7 +59,7 @@ router.get('/:orgSlug/job-profiles', getOrg, async (req, res) => {
 });
 
 /**
- * GET /api/:orgSlug/job-profiles/stats
+ * GET /:orgSlug/job-profiles/stats
  */
 router.get('/:orgSlug/job-profiles/stats', getOrg, async (req, res) => {
   try {
@@ -93,7 +92,7 @@ router.get('/:orgSlug/job-profiles/stats', getOrg, async (req, res) => {
 });
 
 /**
- * GET /api/:orgSlug/job-profiles/:id
+ * GET /:orgSlug/job-profiles/:id
  */
 router.get('/:orgSlug/job-profiles/:id', getOrg, async (req, res) => {
   try {
@@ -115,4 +114,4 @@ router.get('/:orgSlug/job-profiles/:id', getOrg, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

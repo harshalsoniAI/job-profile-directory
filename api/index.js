@@ -1,7 +1,18 @@
-export default function handler(req, res) {
-  if (req.url === "/api/health" || req.url === "/health") {
-    return res.status(200).json({ status: "ok" });
-  }
+import express from 'express';
+import cors from 'cors';
+import jobProfileRoutes from './routes/jobProfiles.js';
 
-  return res.status(404).json({ error: "Not found" });
-}
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Main Job Profile routes (mounted at /api)
+app.use('/api', jobProfileRoutes);
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+export default app;
