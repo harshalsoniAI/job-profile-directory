@@ -1,18 +1,16 @@
-const express = require('express');
-const cors = require('cors');
-const jobProfileRoutes = require('./routes/jobProfiles'); // Correct path: routes are in the same folder
+const express = require("express");
+const cors = require("cors");
+const jobProfileRoutes = require("./routes/jobProfiles"); // Fix: Routes are now in the same folder
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// IMPORTANT: remove /api prefix for Vercel
-app.use('/', jobProfileRoutes);
-
-// health
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+app.use("/", jobProfileRoutes);
 
 module.exports = app;
