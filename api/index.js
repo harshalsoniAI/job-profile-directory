@@ -1,9 +1,7 @@
-const express = require("express");
+export default function handler(req, res) {
+  if (req.url === "/api/health" || req.url === "/health") {
+    return res.status(200).json({ status: "ok" });
+  }
 
-const app = express();
-
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
-});
-
-module.exports = app;
+  return res.status(404).json({ error: "Not found" });
+}
