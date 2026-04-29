@@ -1,64 +1,35 @@
-# Public Job Profile Directory required for Governmental bodies.
+# Public Job Profile Directory (SaaS)
 
-A clean, modern public-facing web application for browsing municipal job classifications. Built with React + Node.js/Express + SQLite, designed for future Workday HCM API integration. Right now, it connects to a Supabase Database.
+A clean, modern public-facing web application for browsing municipal job classifications. Built with React + Node.js/Express, integrated with Supabase for multi-tenancy.
 
-## Quick Start
+## 🚀 Deployment (Vercel)
+This app is optimized for Vercel "Zero Config" deployment. The API is located in `/api` and the React frontend is in the root.
 
-### Prerequisites
-- Node.js 18+
+## 🛠️ Local Testing
 
-### 1. Start the Backend API
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-```bash
-cd backend
-npm install
-npm run seed    # Seeds 22 sample job profiles
-npm run dev     # Starts API on http://localhost:3001
-```
+2. **Setup Environment**
+   Create a `.env` file in the root with:
+   ```env
+   SUPABASE_URL=your_url
+   SUPABASE_KEY=your_key
+   ```
 
-### 2. Start the Frontend
+3. **Run Locally**
+   ```bash
+   npm run dev
+   ```
 
-```bash
-cd frontend
-npm install
-npm run dev     # Starts React app on http://localhost:5173
-```
+4. **Seed Data**
+   ```bash
+   npm run seed
+   ```
 
-Open **http://localhost:5173** in your browser.
-
-## Project Structure
-
-```
-├── backend/
-│   ├── server.js              # Express server entry point
-│   ├── db/
-│   │   ├── database.js        # SQLite schema (Workday-aligned)
-│   │   └── seed.js            # Sample data seeder
-│   └── routes/
-│       └── jobProfiles.js     # REST API endpoints
-├── frontend/
-│   └── src/
-│       ├── api.js             # API service layer
-│       ├── pages/             # Home, Search, JobDetail, Directory
-│       └── components/        # Navbar, Footer, JobCard
-└── README.md
-```
-
-## REST API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/job-profiles` | List all profiles (supports `keyword`, `category`, `managementLevel`, `payGrade`, `status` query params) |
-| GET | `/api/job-profiles/stats` | Aggregate stats (counts, filter options) |
-| GET | `/api/job-profiles/:id` | Single profile by jobProfileId |
-| GET | `/api/health` | Health check |
-
-## Workday API Integration (Phase 2)
-
-The codebase is prepared for Workday HCM integration. Look for `// TODO` comments throughout:
-
-1. **`backend/routes/jobProfiles.js`** — Swap DB queries with Workday API calls
-2. **`frontend/src/api.js`** — Update base URL / add auth headers
-3. **`backend/db/database.js`** — Can become a cache layer
-
-The API response shape already mirrors Workday's job profile object fields (`jobProfileId`, `jobTitle`, `jobFamily`, `jobCategory`, `managementLevel`, etc.).
+## 📂 Project Structure
+- `/api` - Backend Express logic (Serverless)
+- `/src` - React frontend code
+- `/public` - Static assets
