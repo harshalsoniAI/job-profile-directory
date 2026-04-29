@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const jobProfileRoutes = require("../backend/routes/jobProfiles");
+const jobProfileRoutes = require("./routes/jobProfiles");
 
 const app = express();
 
