@@ -12,7 +12,7 @@ app.use(express.json());
 // Routes
 // TODO: When Workday integration is ready, add a middleware layer here
 //       that can toggle between local DB and Workday API data sources.
-app.use('/api/job-profiles', jobProfileRoutes);
+app.use('/api', jobProfileRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

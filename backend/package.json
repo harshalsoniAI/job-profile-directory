@@ -9,8 +9,10 @@
     "seed": "node db/seed.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.105.1",
     "better-sqlite3": "^11.7.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.21.0"
   }
 }

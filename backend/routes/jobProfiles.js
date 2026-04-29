@@ -1,54 +1,57 @@
 const express = require('express');
-const { getDatabase } = require('../db/database');
+const { supabase } = require('../db/database');
 
 const router = express.Router();
 
 /**
- * GET /api/job-profiles
- * Returns all job profiles with optional filtering.
- *
- * Query params: keyword, category, managementLevel, payGrade, status
- *
- * TODO: Replace with Workday GET /jobProfiles API call.
- *       The response shape is already designed to match Workday's
- *       job profile object structure for seamless swap-in.
+ * Middleware to fetch organization ID based on slug
  */
-router.get('/', (req, res) => {
+const getOrg = async (req, res, next) => {
+  const { orgSlug } = req.params;
+  const { data: org, error } = await supabase
+    .from('organizations')
+    .select('*')
+    .eq('slug', orgSlug)
+    .single();
+
+  if (error || !org) {
+    return res.status(404).json({ error: 'Organization not found' });
+  }
+
+  req.org = org;
+  next();
+};
+
+/**
+ * GET /api/:orgSlug/config
+ * Returns branding config for the specific tenant
+ */
+router.get('/:orgSlug/config', getOrg, (req, res) => {
+  res.json({ data: req.org });
+});
+
+/**
+ * GET /api/:orgSlug/job-profiles
+ */
+router.get('/:orgSlug/job-profiles', getOrg, async (req, res) => {
   try {
-    const db = getDatabase();
     const { keyword, category, managementLevel, payGrade, status } = req.query;
 
-    let query = 'SELECT * FROM job_profiles WHERE 1=1';
-    const params = [];
+    let query = supabase
+      .from('job_profiles')
+      .select('*')
+      .eq('organization_id', req.org.id);
 
-    if (keyword) {
-      query += ' AND (job_title LIKE ? OR job_description LIKE ?)';
-      params.push(`%${keyword}%`, `%${keyword}%`);
-    }
-    if (category) {
-      query += ' AND job_category = ?';
-      params.push(category);
-    }
-    if (managementLevel) {
-      query += ' AND management_level = ?';
-      params.push(managementLevel);
-    }
-    if (payGrade) {
-      query += ' AND pay_grade = ?';
-      params.push(payGrade);
-    }
-    if (status) {
-      query += ' AND status = ?';
-      params.push(status);
-    }
+    if (keyword) query = query.or(`job_title.ilike.%${keyword}%,job_description.ilike.%${keyword}%`);
+    if (category) query = query.eq('job_category', category);
+    if (managementLevel) query = query.eq('management_level', managementLevel);
+    if (payGrade) query = query.eq('pay_grade', payGrade);
+    if (status) query = query.eq('status', status);
 
-    query += ' ORDER BY job_title ASC';
+    const { data: profiles, error } = await query.order('job_title', { ascending: true });
 
-    const rows = db.prepare(query).all(...params);
-    db.close();
+    if (error) throw error;
 
-    // Map DB snake_case to API camelCase (mirrors Workday object shape)
-    const profiles = rows.map(mapRowToProfile);
     res.json({ data: profiles, total: profiles.length });
   } catch (err) {
     console.error('Error fetching job profiles:', err);
@@ -57,27 +60,31 @@ router.get('/', (req, res) => {
 });
 
 /**
- * GET /api/job-profiles/stats
- * Returns aggregate stats for the landing page.
+ * GET /api/:orgSlug/job-profiles/stats
  */
-router.get('/stats', (req, res) => {
+router.get('/:orgSlug/job-profiles/stats', getOrg, async (req, res) => {
   try {
-    const db = getDatabase();
-    const total = db.prepare('SELECT COUNT(*) as count FROM job_profiles').get();
-    const active = db.prepare("SELECT COUNT(*) as count FROM job_profiles WHERE status = 'Active'").get();
-    const departments = db.prepare('SELECT COUNT(DISTINCT job_category) as count FROM job_profiles').get();
-    const categories = db.prepare('SELECT DISTINCT job_category FROM job_profiles ORDER BY job_category').all();
-    const levels = db.prepare('SELECT DISTINCT management_level FROM job_profiles ORDER BY management_level').all();
-    const grades = db.prepare('SELECT DISTINCT pay_grade FROM job_profiles ORDER BY pay_grade').all();
-    db.close();
+    const orgId = req.org.id;
+
+    const [totalRes, activeRes, deptsRes, levelsRes, gradesRes] = await Promise.all([
+      supabase.from('job_profiles').select('*', { count: 'exact', head: true }).eq('organization_id', orgId),
+      supabase.from('job_profiles').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'Active'),
+      supabase.from('job_profiles').select('job_category').eq('organization_id', orgId),
+      supabase.from('job_profiles').select('management_level').eq('organization_id', orgId),
+      supabase.from('job_profiles').select('pay_grade').eq('organization_id', orgId)
+    ]);
+
+    const departments = [...new Set(deptsRes.data.map(d => d.job_category))].sort();
+    const managementLevels = [...new Set(levelsRes.data.map(l => l.management_level))].sort();
+    const payGrades = [...new Set(gradesRes.data.map(g => g.pay_grade))].sort();
 
     res.json({
-      totalProfiles: total.count,
-      activeProfiles: active.count,
-      totalDepartments: departments.count,
-      departments: categories.map(c => c.job_category),
-      managementLevels: levels.map(l => l.management_level),
-      payGrades: grades.map(g => g.pay_grade)
+      totalProfiles: totalRes.count,
+      activeProfiles: activeRes.count,
+      totalDepartments: departments.length,
+      departments,
+      managementLevels,
+      payGrades
     });
   } catch (err) {
     console.error('Error fetching stats:', err);
@@ -86,42 +93,26 @@ router.get('/stats', (req, res) => {
 });
 
 /**
- * GET /api/job-profiles/:id
- * Returns a single job profile by jobProfileId.
- *
- * TODO: Replace with Workday GET /jobProfiles/:id API call.
+ * GET /api/:orgSlug/job-profiles/:id
  */
-router.get('/:id', (req, res) => {
+router.get('/:orgSlug/job-profiles/:id', getOrg, async (req, res) => {
   try {
-    const db = getDatabase();
-    const row = db.prepare('SELECT * FROM job_profiles WHERE job_profile_id = ?').get(req.params.id);
-    db.close();
+    const { data: profile, error } = await supabase
+      .from('job_profiles')
+      .select('*')
+      .eq('organization_id', req.org.id)
+      .eq('job_profile_id', req.params.id)
+      .single();
 
-    if (!row) {
+    if (error || !profile) {
       return res.status(404).json({ error: 'Job profile not found' });
     }
 
-    res.json({ data: mapRowToProfile(row) });
+    res.json({ data: profile });
   } catch (err) {
     console.error('Error fetching job profile:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-/** Maps a DB row (snake_case) to the API response shape (camelCase / Workday-aligned) */
-function mapRowToProfile(row) {
-  return {
-    jobProfileId: row.job_profile_id,
-    jobTitle: row.job_title,
-    jobFamily: row.job_family,
-    jobCategory: row.job_category,
-    managementLevel: row.management_level,
-    jobDescription: row.job_description,
-    qualifications: row.qualifications,
-    payGrade: row.pay_grade,
-    status: row.status,
-    effectiveDate: row.effective_date
-  };
-}
 
 module.exports = router;

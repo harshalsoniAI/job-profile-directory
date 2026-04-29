@@ -1,21 +1,25 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTenant } from '../context/TenantContext';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const { org, tenantSlug } = useTenant();
 
   const links = [
-    { to: '/', label: 'Home' },
-    { to: '/search', label: 'Search' },
-    { to: '/directory', label: 'A–Z Directory' },
+    { to: `/${tenantSlug}`, label: 'Home' },
+    { to: `/${tenantSlug}/search`, label: 'Search' },
+    { to: `/${tenantSlug}/directory`, label: 'A–Z Directory' },
   ];
 
   return (
     <nav className={`navbar${open ? ' open' : ''}`}>
-      <Link to="/" className="navbar__logo">
-        <span className="navbar__logo-icon">JP</span>
-        Job Profile Directory
+      <Link to={`/${tenantSlug}`} className="navbar__logo">
+        <span className="navbar__logo-icon">
+          {org?.logo_url ? <img src={org.logo_url} alt="Logo" /> : 'JP'}
+        </span>
+        {org?.name || 'Job Profile Directory'}
       </Link>
       <div className="navbar__links">
         {links.map(l => (

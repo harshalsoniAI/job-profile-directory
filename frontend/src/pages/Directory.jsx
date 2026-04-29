@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchJobProfiles } from '../api';
+import { useTenant } from '../context/TenantContext';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 export default function Directory() {
+  const { tenantSlug } = useTenant();
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeLetter, setActiveLetter] = useState(null);
@@ -12,15 +14,15 @@ export default function Directory() {
   const letterRefs = useRef({});
 
   useEffect(() => {
-    fetchJobProfiles()
+    fetchJobProfiles(tenantSlug)
       .then(res => setProfiles(res.data))
       .finally(() => setLoading(false));
-  }, []);
+  }, [tenantSlug]);
 
   // Group by first letter
   const grouped = {};
   profiles.forEach(p => {
-    const letter = p.jobTitle[0].toUpperCase();
+    const letter = p.job_title[0].toUpperCase();
     if (!grouped[letter]) grouped[letter] = [];
     grouped[letter].push(p);
   });
@@ -57,15 +59,15 @@ export default function Directory() {
           <div className="letter-group__list">
             {grouped[letter].map(p => (
               <div
-                key={p.jobProfileId}
+                key={p.id}
                 className="letter-group__item"
-                onClick={() => navigate(`/profile/${p.jobProfileId}`)}
+                onClick={() => navigate(`/${tenantSlug}/profile/${p.job_profile_id}`)}
                 tabIndex={0}
                 role="link"
               >
                 <div>
-                  <div className="letter-group__item-title">{p.jobTitle}</div>
-                  <div className="letter-group__item-dept">{p.jobCategory} · {p.payGrade}</div>
+                  <div className="letter-group__item-title">{p.job_title}</div>
+                  <div className="letter-group__item-dept">{p.job_category} · {p.pay_grade}</div>
                 </div>
                 <span style={{ color: 'var(--teal)', fontWeight: 600, fontSize: '0.8rem' }}>→</span>
               </div>

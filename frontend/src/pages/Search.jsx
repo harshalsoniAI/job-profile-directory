@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { fetchJobProfiles, fetchStats } from '../api';
+import { useTenant } from '../context/TenantContext';
 import JobCard from '../components/JobCard';
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { tenantSlug } = useTenant();
   const [profiles, setProfiles] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,16 +18,15 @@ export default function Search() {
     status: '',
   });
 
-  useEffect(() => { fetchStats().then(setStats); }, []);
+  useEffect(() => { fetchStats(tenantSlug).then(setStats); }, [tenantSlug]);
 
   useEffect(() => {
     setLoading(true);
-    fetchJobProfiles(filters)
+    fetchJobProfiles(tenantSlug, filters)
       .then(res => setProfiles(res.data))
       .finally(() => setLoading(false));
-  }, [filters]);
+  }, [tenantSlug, filters]);
 
-  // Sync URL params on mount
   useEffect(() => {
     const kw = searchParams.get('keyword');
     const cat = searchParams.get('category');
@@ -101,7 +102,7 @@ export default function Search() {
         <div className="empty-state">No job profiles match your filters. Try broadening your search.</div>
       ) : (
         <div className="job-cards">
-          {profiles.map(p => <JobCard key={p.jobProfileId} profile={p} />)}
+          {profiles.map(p => <JobCard key={p.id} profile={p} />)}
         </div>
       )}
     </div>

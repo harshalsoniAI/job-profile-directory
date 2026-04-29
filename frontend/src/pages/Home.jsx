@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchStats, fetchJobProfiles } from '../api';
+import { useTenant } from '../context/TenantContext';
 
 const DEPT_ICONS = {
   'Public Works': '🏗️',
@@ -11,23 +12,24 @@ const DEPT_ICONS = {
 };
 
 export default function Home() {
+  const { org, tenantSlug } = useTenant();
   const [stats, setStats] = useState(null);
   const [deptCounts, setDeptCounts] = useState({});
   const [keyword, setKeyword] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchStats().then(setStats);
-    fetchJobProfiles().then(res => {
+    fetchStats(tenantSlug).then(setStats);
+    fetchJobProfiles(tenantSlug).then(res => {
       const counts = {};
-      res.data.forEach(p => { counts[p.jobCategory] = (counts[p.jobCategory] || 0) + 1; });
+      res.data.forEach(p => { counts[p.job_category] = (counts[p.job_category] || 0) + 1; });
       setDeptCounts(counts);
     });
-  }, []);
+  }, [tenantSlug]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    navigate(`/search?keyword=${encodeURIComponent(keyword)}`);
+    navigate(`/${tenantSlug}/search?keyword=${encodeURIComponent(keyword)}`);
   };
 
   if (!stats) return <div className="loading"><div className="spinner" />Loading…</div>;
@@ -37,7 +39,7 @@ export default function Home() {
       <section className="hero">
         <div className="hero__content">
           <div className="hero__badge">📋 Public Directory</div>
-          <h1>City of Malgudi<br />Job Profile Directory</h1>
+          <h1>{org?.name}<br />Job Profile Directory</h1>
           <p>
             Browse all job classifications within our organization.
             Find detailed descriptions, qualifications, and pay information
@@ -81,7 +83,7 @@ export default function Home() {
             <div
               key={dept}
               className="dept-card"
-              onClick={() => navigate(`/search?category=${encodeURIComponent(dept)}`)}
+              onClick={() => navigate(`/${tenantSlug}/search?category=${encodeURIComponent(dept)}`)}
             >
               <div className="dept-card__icon">{DEPT_ICONS[dept] || '📂'}</div>
               <div>
