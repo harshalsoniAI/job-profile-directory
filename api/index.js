@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const jobProfileRoutes = require("./routes/jobProfiles"); // Fix: Routes are now in the same folder
+const jobProfileRoutes = require("../backend/routes/jobProfiles");
 
 const app = express();
 
