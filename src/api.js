@@ -1,7 +1,8 @@
 const API_BASE = window.location.origin.includes('localhost') ? 'http://localhost:3001/api' : '/api';
 
 export async function fetchOrgConfig(slug) {
-  const res = await fetch(`${API_BASE}/${slug}/config`);
+  // const res = await fetch(`${API_BASE}/${slug}/config`);
+  const res = await fetch(`${API_BASE}/${slug}/config?t=${Date.now()}`);
   if (!res.ok) throw new Error('Organization not found');
   return res.json();
 }
