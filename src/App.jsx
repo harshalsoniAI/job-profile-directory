@@ -6,7 +6,7 @@ import Home from './pages/Home';
 import Search from './pages/Search';
 import JobDetail from './pages/JobDetail';
 import Directory from './pages/Directory';
-import { Navigate } from "react-router-dom";
+
 import './index.css';
 
 function AppContent() {
