@@ -1,24 +1,30 @@
-import express from 'express';
-import cors from 'cors';
-import jobProfileRoutes from './routes/jobProfiles.js';
+import { supabase } from "./db/database.js";
 
-const app = express();
+export default async function handler(req, res) {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const parts = url.pathname.split("/").filter(Boolean);
 
-app.use(cors());
-app.use(express.json());
+  // Health
+  if (url.pathname === "/api/health") {
+    return res.status(200).json({ status: "ok" });
+  }
 
-// Log requests to help debug Vercel routing
-app.use((req, res, next) => {
-  console.log(`API Request: ${req.method} ${req.url}`);
-  next();
-});
+  // /api/:tenantSlug/config
+  if (parts.length === 3 && parts[0] === "api" && parts[2] === "config") {
+    const tenantSlug = parts[1];
 
-// Mount at root because Vercel api/index.js already handles the /api prefix
-app.use('/', jobProfileRoutes);
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("slug", tenantSlug)
+      .single();
 
-// Health check (now handles both /api/health and /api/api/health)
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), message: 'Malgudi API is active' });
-});
+    if (error || !data) {
+      return res.status(404).json({ error: "Organization not found" });
+    }
 
-export default app;
+    return res.status(200).json(data);
+  }
+
+  return res.status(404).json({ error: "Not found" });
+}
